@@ -28,8 +28,9 @@ class App:
         file_type = os.path.splitext(model_path)[1]
         if file_type == '.xml':
             # openvino's IR model
-            import VINOengine
-            self.engine = VINOengine.Infer_engine(model_path, label_path, debug=False)
+            from SSDmobilenetv2 import SSDmobilenetv2
+            # self.engine = VINOengine.Infer_engine(model_path, label_path, debug=False)
+            self.engine = SSDmobilenetv2(model_path, label_path, debug=False)
         elif file_type == '.onnx':
             # ONNX model
             import ONNXengine
@@ -96,9 +97,9 @@ def main():
     """ test yolo-v3 (ONNX) """
     # app = App(tkinter.Tk(), "Inference liveview (yolov3)", 'yolov3.onnx', 'label.txt', FPS=10)
     """ test tiny yolo-v3 (ONNX) """
-    app = App(tkinter.Tk(), "Inference liveview (tiny yolov3)", 'yolov3-tiny.onnx', 'label.txt', FPS=30)
+    # app = App(tkinter.Tk(), "Inference liveview (tiny yolov3)", 'yolov3-tiny.onnx', 'label.txt', FPS=30)
     """ test ssd-mobilenet-v2 (openVINO) """
-    # app = App(tkinter.Tk(), "Inference liveview (ssd-mobilenet)", 'ssd_mobilenet_v2_coco/frozen_inference_graph.xml', 'coco_label_2018.txt', FPS=30)
+    app = App(tkinter.Tk(), "Inference liveview (ssd-mobilenet)", 'ssd_mobilenet_v2_coco/frozen_inference_graph.xml', 'coco_label_2018.txt', FPS=30)
     """ test face-detection-retail-0005 (openVINO) """
     # app = App(tkinter.Tk(), "Inference liveview (retail-0005)", 'face-detection-retail-0005/FP16/face-detection-retail-0005.xml', 'coco_label_2018.txt', FPS=10)
     
