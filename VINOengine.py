@@ -36,40 +36,16 @@ class Infer_engine():
         with open(label_file) as f:
             self.labels = f.read().splitlines()
 
-    ''' resize image with aspect ratio and add padding to square '''
-    def resize_padding(self, image, target_width, color=(255, 255, 255)):
-        new_image = Image.new('RGB', (target_width, target_width), color)
-
-        w, h = image.size
-        padding = [0, 0]
-        if w > h:
-            ratio = target_width / w
-            new_h = int(h * ratio)
-            small_image = image.resize((target_width, new_h))
-            padding[1] = (target_width - new_h) // 2
-        else:
-            ratio = target_width / h
-            new_w = int(w * ratio)
-            small_image = image.resize((new_w, target_width))
-            padding[0] = (target_width - new_w) // 2
-        new_image.paste(small_image, tuple(padding))
-        return new_image
-
     def pre_process(self, input_data, input_size=(416, 416)):
         image_data = cv2.cvtColor(input_data, cv2.COLOR_RGB2BGR)
         image_data = cv2.resize(image_data, input_size)
-        image_data = np.transpose(image_data, [2, 0, 1])   # input format [channel, height, width]# image_data = np.array(self.resize_padding(input_data, input_size[0], (128, 128, 128)), dtype='float32')
+        image_data = np.transpose(image_data, [2, 0, 1])   # input format [channel, height, width]
         image_data = np.expand_dims(image_data, 0)
-        # image_data /= 255    # normalize
-        # image_data = np.transpose(image_data, [2, 0, 1])   # input format [channel, height, width]
-        # image_data = np.expand_dims(image_data, 0)         # add batch dimension
         return image_data
 
     def inference(self, image):
         image_data = self.pre_process(image, input_size=(300, 300))
-        # img_size = np.array([image.shape[0], image.shape[1]], dtype=np.float32).reshape(1, 2)
         input_data = {
-            #### modify here ####
             self.input_names[0]: image_data
         }
         return self.session.infer(inputs=input_data)

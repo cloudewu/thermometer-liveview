@@ -3,15 +3,14 @@ import PIL.Image, PIL.ImageTk
 import os
 import winsound #only for windows beeping usage
 #for linux, please install sox beforehand (sudo apt-get install sox)
-from datetime import datetime
 from WebCamera import WebCamera
 
 class App:
     app = {
         'window': None,
         'canvas': None,
-        'time': None,
-        'time_label': None
+        'info': None,
+        'info_label': None
     }
     cap = None
     engine = None
@@ -44,10 +43,10 @@ class App:
         self.app['window'].title(title)
         self.app['canvas'] = tkinter.Canvas(self.app['window'], width=self.cap.width, height=self.cap.height)
         self.app['canvas'].pack()
-        self.app['time'] = tkinter.StringVar()
-        self.app['time'].set("Empty")
-        self.app['time_label'] = tkinter.Label(self.app['window'], textvariable=self.app['time'])
-        self.app['time_label'].pack(side="bottom", anchor=tkinter.CENTER)
+        self.app['info'] = tkinter.StringVar()
+        self.app['info'].set("Empty")
+        self.app['info_label'] = tkinter.Label(self.app['window'], textvariable=self.app['info'])
+        self.app['info_label'].pack(side="bottom", anchor=tkinter.CENTER)
 
         self.delay = 1000 // FPS
         
@@ -78,27 +77,30 @@ class App:
             
             '''  a test for beeping when something(people for example) was detected
                 person's label =0(in coco_label_2018.txt), 1(in label.txt)'''
+            human_count = classes.count(0)
             if 0 in classes:  
-                winsound.Beep(2750, 100) #for windows
+                # winsound.Beep(2750, 100) #for windows
                 #os.system("play -n synth 0.1 sine 880 vol 0.5 >/dev/null 2>&1")#for linux
-
+                pass
 
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(im))
             self.app['canvas'].create_image(0, 0, image=self.photo, anchor=tkinter.NW)
         else:
             print(" [Warning] Fail to get frame") 
 
-        self.app['time'].set(str(datetime.now()))
+        self.app['info'].set("#Human detect: {:3d}".format(human_count))
         self.app['window'].after(self.delay, self.update)
 
 
 def main():
     """ test yolo-v3 (ONNX) """
-    #app = App(tkinter.Tk(), "Inference liveview", 'yolov3.onnx', 'label.txt', FPS=10)
+    # app = App(tkinter.Tk(), "Inference liveview (yolov3)", 'yolov3.onnx', 'label.txt', FPS=10)
     """ test tiny yolo-v3 (ONNX) """
-    app = App(tkinter.Tk(), "Inference liveview", 'yolov3-tiny.onnx', 'label.txt', FPS=30)
+    app = App(tkinter.Tk(), "Inference liveview (tiny yolov3)", 'yolov3-tiny.onnx', 'label.txt', FPS=30)
     """ test ssd-mobilenet-v2 (openVINO) """
-    #app = App(tkinter.Tk(), "Inference liveview", 'ssd_mobilenet_v2_coco/frozen_inference_graph.xml', 'coco_label_2018.txt', FPS=30)
+    # app = App(tkinter.Tk(), "Inference liveview (ssd-mobilenet)", 'ssd_mobilenet_v2_coco/frozen_inference_graph.xml', 'coco_label_2018.txt', FPS=30)
+    """ test face-detection-retail-0005 (openVINO) """
+    # app = App(tkinter.Tk(), "Inference liveview (retail-0005)", 'face-detection-retail-0005/FP16/face-detection-retail-0005.xml', 'coco_label_2018.txt', FPS=10)
     
     app.run()
 
