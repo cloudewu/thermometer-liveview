@@ -3,8 +3,10 @@ import PIL.Image, PIL.ImageTk
 import os
 import winsound #only for windows beeping usage
 #for linux, please install sox beforehand (sudo apt-get install sox)
-from WebCamera import WebCamera
+import argparse
 import cv2
+
+from WebCamera import WebCamera
 
 class App:
     app = {
@@ -17,9 +19,10 @@ class App:
     engine = None
     delay = 0
     
-    def __init__(self, window, title, model_path, label_path, FPS = 30, source = 0, logging = True):
+    def __init__(self, window, title, model_path, label_path, FPS = 30, source = 0, logging = True, debug = False):
         self.logging = logging
-
+        self.debug = debug
+        
         # get camera
         self.cap = WebCamera(source=source, logging=logging)
         if self.logging:
@@ -29,12 +32,14 @@ class App:
         file_type = os.path.splitext(model_path)[1]
         if file_type == '.xml':
             # openvino's IR model
+            # import SSDengine
+            # self.engine = SSDengine.Infer_engine(model_path, label_path, debug=debug)
             import VINOengine
-            self.engine = VINOengine.Infer_engine(model_path, label_path, debug=False)
+            self.engine = VINOengine.Infer_engine(model_path, label_path, debug=debug)
         elif file_type == '.onnx':
             # ONNX model
             import ONNXengine
-            self.engine = ONNXengine.Infer_engine(model_path, label_path, debug=False)
+            self.engine = ONNXengine.Infer_engine(model_path, label_path, debug=debug)
         else:
             print("[Error] Model not supported")
             return
@@ -95,8 +100,29 @@ class App:
             print(" [Warning] Fail to get frame") 
             self.videoWriter.release()
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='This is a program to liveview inference result')
+    parser.add_argument('-m', '--model', nargs='?', default='yolov3-tiny.onnx', help='Model used to do inference. Default=yolov3-tiny.onnx')
+    parser.add_argument('-l', '--label', nargs='?', default='label.txt', help='Label file used by the model.(one line one class, w/o index number) Default=label.txt')
+    parser.add_argument('-d', '--device', nargs=1, type=int, help='Device ID for liveview')
+    parser.add_argument('-f', '--file', nargs=1, type=str, help='Video source to run the inference')
+    parser.add_argument('--FPS', nargs='?', default=30, type=int, help='Frame per second. Default=30')
+    parser.add_argument('--debug', action='store_true', help='Run program in debug mode')
+    
+    return parser.parse_args()
 
 def main():
+    args = parse_args()
+    model_name = os.path.basename(args.model).split('.')[0]
+    source = args.file if args.device is None else args.device
+    if source is None:
+        print('Please assign at least one of input device or input file.')
+        return
+    
+    app = App(tkinter.Tk(), "Inference liveview ({})".format(model_name), args.model, args.label, FPS=args.FPS, source=source[0], debug=args.debug)
+    app.run()
+
+    ### Sample command to run this program ###
     """ test yolo-v3 (ONNX) """
     # app = App(tkinter.Tk(), "Inference liveview (yolov3)", 'yolov3.onnx', 'label.txt', FPS=10)
     """ test tiny yolo-v3 (ONNX) """
@@ -104,9 +130,8 @@ def main():
     """ test ssd-mobilenet-v2 (openVINO) """
     # app = App(tkinter.Tk(), "Inference liveview (ssd-mobilenet)", 'ssd_mobilenet_v2_coco/frozen_inference_graph.xml', 'coco_label_2018.txt', FPS=30)
     """ test face-detection-retail-0005 (openVINO) """
-    app = App(tkinter.Tk(), "Inference liveview (retail-0005)", 'face-detection-retail-0005/FP16/face-detection-retail-0005.xml', 'coco_label_2018.txt', FPS=30, source='demo_video.avi')
+    # app = App(tkinter.Tk(), "Inference liveview (retail-0005)", 'face-detection-retail-0005/FP16/face-detection-retail-0005.xml', 'coco_label_2018.txt', FPS=30, source=0)
     
-    app.run()
 
 if __name__=='__main__':
     main()
