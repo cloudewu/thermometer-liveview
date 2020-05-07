@@ -9,12 +9,13 @@ import cv2
 from WebCamera import WebCamera
 
 class App:
-    app = {
-        'window': None,
-        'canvas': None,
-        'info': None,
-        'info_label': None
-    }
+    class User_Interface:
+        window = None
+        canvas = None,
+        info = None,
+        info_label = None
+    
+    ui = User_Interface()
     cap = None
     engine = None
     delay = 0
@@ -32,8 +33,6 @@ class App:
         file_type = os.path.splitext(model_path)[1]
         if file_type == '.xml':
             # openvino's IR model
-            # import SSDengine
-            # self.engine = SSDengine.Infer_engine(model_path, label_path, debug=debug)
             import VINOengine
             self.engine = VINOengine.Infer_engine(model_path, label_path, debug=debug)
         elif file_type == '.onnx':
@@ -45,15 +44,7 @@ class App:
             return
 
         # set program
-        self.app['window'] = window
-        self.app['window'].title(title)
-        self.app['canvas'] = tkinter.Canvas(self.app['window'], width=self.cap.width, height=self.cap.height)
-        self.app['canvas'].pack()
-        self.app['info'] = tkinter.StringVar()
-        self.app['info'].set("Empty")
-        self.app['info_label'] = tkinter.Label(self.app['window'], textvariable=self.app['info'])
-        self.app['info_label'].pack(side="bottom", anchor=tkinter.CENTER)
-
+        self.UI_setup(window, title)
         self.delay = 1000 // FPS
         
         if self.logging:
@@ -62,9 +53,18 @@ class App:
             print("\tCanvas size: " + str(self.cap.get_size()))
             print("\tFPS: {} / update time: {} ms".format(FPS, self.delay))
         
+    def UI_setup(self, window, title):
+        self.ui.window = window
+        self.ui.window.title(title)
+        self.ui.canvas = tkinter.Canvas(self.ui.window, width=self.cap.width, height=self.cap.height)
+        self.ui.canvas.pack()
+        self.ui.info = tkinter.StringVar()
+        self.ui.info.set("Empty")
+        self.ui.info_label = tkinter.Label(self.ui.window, textvariable=self.ui.info)
+        self.ui.info_label.pack(side="bottom", anchor=tkinter.CENTER)
     
     def run(self):
-        if self.app['window'] is None:
+        if self.ui.window is None:
             print("Window is not created!")
             return
         if self.cap is None:
@@ -73,7 +73,7 @@ class App:
         
         # run
         self.update()
-        self.app['window'].mainloop()
+        self.ui.window.mainloop()
     
     def update(self):
         ret, frame = self.cap.get_frame()
@@ -92,13 +92,14 @@ class App:
                 pass
 
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(im))
-            self.app['canvas'].create_image(0, 0, image=self.photo, anchor=tkinter.NW)
+            self.ui.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
 
-            self.app['info'].set("#Human detect: {:3d}".format(human_count))
-            self.app['window'].after(self.delay, self.update)
+            self.ui.info.set("#Human detect: {:3d}".format(human_count))
+            self.ui.window.after(self.delay, self.update)
         else:
             print(" [Warning] Fail to get frame") 
             self.videoWriter.release()
+        
 
 def parse_args():
     parser = argparse.ArgumentParser(description='This is a program to liveview inference result')
